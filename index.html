@@ -64,6 +64,25 @@ body.editor-open .page{margin-right:320px}
 [contenteditable="true"]:focus{border-bottom:1px solid #a78bfa;background:rgba(167,139,250,.05)}
 .edit-hint{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(124,58,237,.9);color:#fff;padding:8px 20px;border-radius:20px;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:1px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:998}
 .edit-hint.show{opacity:1}
+/* ── GITHUB SYNC ── */
+.sync-status{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:6px;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.5px;margin-bottom:8px;min-height:36px;line-height:1.4}
+.sync-status.idle{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.3)}
+.sync-status.syncing{background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.3);color:#a78bfa}
+.sync-status.ok{background:rgba(110,231,183,.07);border:1px solid rgba(110,231,183,.2);color:#6ee7b7}
+.sync-status.err{background:rgba(248,113,113,.07);border:1px solid rgba(248,113,113,.2);color:#f87171}
+.sync-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sync-status.idle .sync-dot{background:rgba(255,255,255,.2)}
+.sync-status.syncing .sync-dot{background:#a78bfa;animation:sdot .8s ease-in-out infinite}
+.sync-status.ok .sync-dot{background:#6ee7b7}
+.sync-status.err .sync-dot{background:#f87171}
+@keyframes sdot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.8)}}
+.gh-input{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:4px;color:#fff;font-family:'Space Mono',monospace;font-size:10px;padding:7px 10px;outline:none;letter-spacing:.3px;margin-top:5px;transition:border-color .2s}
+.gh-input:focus{border-color:#a78bfa}
+.gh-input::placeholder{color:rgba(255,255,255,.18)}
+.sync-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:1px;margin-left:auto}
+.sync-badge.on{background:rgba(110,231,183,.1);border:1px solid rgba(110,231,183,.25);color:#6ee7b7}
+.sync-badge.off{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.2)}
+
 
 /* ── HEADER ── */
 header{padding:40px 0 36px;text-align:center}
@@ -340,6 +359,38 @@ header{animation:fadeUp .5s ease both}
       </div>
     </div>
   </div>
+    <div class="editor-section">
+      <div class="editor-section-title" style="display:flex;align-items:center;gap:6px">
+        <span>GitHub Auto-Sync</span>
+        <span class="sync-badge off" id="syncBadge">OFF</span>
+      </div>
+      <div style="padding:12px 14px;display:flex;flex-direction:column;gap:10px">
+        <p style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.3px;line-height:1.8">
+          Connect your repo once — every lyrics save &amp; song change pushes instantly to GitHub so <strong style="color:rgba(255,255,255,.5)">any browser sees your changes</strong>.
+        </p>
+        <div>
+          <label style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.3);text-transform:uppercase">GitHub Username</label>
+          <input class="gh-input" id="gh-user" placeholder="your-github-username" oninput="ghChanged()">
+        </div>
+        <div>
+          <label style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.3);text-transform:uppercase">Repository Name</label>
+          <input class="gh-input" id="gh-repo" placeholder="bts-archive" oninput="ghChanged()">
+        </div>
+        <div>
+          <label style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.3);text-transform:uppercase">
+            Personal Access Token &nbsp;
+            <a href="https://github.com/settings/tokens/new?scopes=repo&description=BTS+Archive" target="_blank" style="color:#a78bfa;text-decoration:none">Create one ↗</a>
+          </label>
+          <input class="gh-input" id="gh-token" type="password" placeholder="ghp_xxxxxxxxxxxx" oninput="ghChanged()">
+          <p style="font-family:'Space Mono',monospace;font-size:9px;color:rgba(255,255,255,.15);line-height:1.7;margin-top:4px">Stored only in your browser. Never sent anywhere except GitHub.</p>
+        </div>
+        <div class="sync-status idle" id="syncStatus">
+          <span class="sync-dot"></span>
+          <span id="syncMsg">Fill in details above to enable</span>
+        </div>
+        <button class="editor-btn editor-btn-secondary" style="border-color:rgba(167,139,250,.3);color:#a78bfa" onclick="ghTest()">⟳ Test Connection</button>
+      </div>
+    </div>
   <div class="editor-footer">
     <div style="font-family:'Space Mono',monospace;font-size:9px;color:rgba(255,255,255,.25);letter-spacing:1px;text-align:center;padding:4px 0 8px;line-height:1.8">💾 Auto-saves lyrics, photos & songs</div>
     <button class="editor-btn editor-btn-primary" onclick="exportHTML()">⬇ Download Edited HTML</button>
@@ -1011,6 +1062,200 @@ function updateStorageInfo(){
 loadSaved();
 buildFilters();render();renderGallery();
 updateStorageInfo();
+
+// ════════════════════════════════════════
+// GITHUB SYNC ENGINE
+// ════════════════════════════════════════
+const GH_KEY = 'bts_gh_creds';
+
+function ghCreds(){
+  return {
+    user:  document.getElementById('gh-user').value.trim(),
+    repo:  document.getElementById('gh-repo').value.trim(),
+    token: document.getElementById('gh-token').value.trim(),
+  };
+}
+
+function ghReady(){
+  const c = ghCreds();
+  return !!(c.user && c.repo && c.token);
+}
+
+function ghChanged(){
+  const c = ghCreds();
+  try{ localStorage.setItem(GH_KEY, JSON.stringify(c)); }catch(e){}
+  const ready = !!(c.user && c.repo && c.token);
+  setBadge(ready);
+  if(ready) setSS('idle','Ready — will sync on next save');
+  else      setSS('idle','Fill in details above to enable');
+}
+
+function ghLoadCreds(){
+  try{
+    const c = JSON.parse(localStorage.getItem(GH_KEY)||'{}');
+    if(c.user)  document.getElementById('gh-user').value  = c.user;
+    if(c.repo)  document.getElementById('gh-repo').value  = c.repo;
+    if(c.token) document.getElementById('gh-token').value = c.token;
+    if(c.user && c.repo && c.token){
+      setBadge(true);
+      setSS('idle','Ready — auto-sync enabled');
+    }
+  }catch(e){}
+}
+
+function setBadge(on){
+  const b = document.getElementById('syncBadge');
+  if(!b) return;
+  b.textContent = on ? 'AUTO' : 'OFF';
+  b.className = 'sync-badge ' + (on ? 'on' : 'off');
+}
+
+function setSS(state, msg){
+  const el = document.getElementById('syncStatus');
+  if(!el) return;
+  el.className = 'sync-status ' + state;
+  document.getElementById('syncMsg').textContent = msg;
+}
+
+async function ghGetSHA(c){
+  try{
+    const r = await fetch(
+      `https://api.github.com/repos/${c.user}/${c.repo}/contents/index.html`,
+      { headers:{ Authorization:`token ${c.token}`, Accept:'application/vnd.github.v3+json' } }
+    );
+    if(r.ok){ const d=await r.json(); return d.sha; }
+  }catch(e){}
+  return null;
+}
+
+function buildFullHTML(){
+  // Start from the live DOM
+  let h = document.documentElement.outerHTML;
+
+  // 1. Bake in current DATA (lyrics, custom songs) — replace the let DATA=[ ... ]; block
+  const marker = 'let DATA=[';
+  const s = h.indexOf(marker);
+  if(s !== -1){
+    // find the matching ]; by scanning for the semicolon after the closing bracket
+    let depth=0, i=s+marker.length-1;
+    for(; i<h.length; i++){
+      if(h[i]==='[') depth++;
+      else if(h[i]===']'){ depth--; if(depth===0){i++;break;} }
+    }
+    // i now points just past the ] — skip optional whitespace then ;
+    while(h[i]===' '||h[i]==='\n'||h[i]==='\r') i++;
+    if(h[i]===';') i++;
+    h = h.slice(0,s) + 'let DATA=' + JSON.stringify(DATA) + ';' + h.slice(i);
+  }
+
+  // 2. Bake in any CSS variable overrides
+  const vars=['--bg','--bg2','--bg3','--text','--text2','--text3','--accent1','--accent2','--accent3','--border','--border2','--radius','--font-display','--font-body','--font-mono'];
+  let ov=':root{\n';
+  vars.forEach(v=>{const val=document.documentElement.style.getPropertyValue(v);if(val)ov+=`  ${v}:${val};\n`;});
+  ov+='}';
+  if(ov.trim()!==':root{\n}') h=h.replace('</style>',ov+'\n</style>');
+
+  // 3. Strip contenteditable
+  h = h.replace(/contenteditable="true"/g,'contenteditable="false"');
+
+  return h;
+}
+
+async function ghPush(msg){
+  if(!ghReady()) return;           // silent if not configured
+  const c = ghCreds();
+  setSS('syncing','Syncing to GitHub…');
+  try{
+    const html    = buildFullHTML();
+    const encoded = btoa(unescape(encodeURIComponent(html)));
+    const sha     = await ghGetSHA(c);
+    const body    = { message: msg||'💜 BTS Archive update', content: encoded };
+    if(sha) body.sha = sha;
+
+    const r = await fetch(
+      `https://api.github.com/repos/${c.user}/${c.repo}/contents/index.html`,
+      {
+        method:'PUT',
+        headers:{
+          Authorization:`token ${c.token}`,
+          Accept:'application/vnd.github.v3+json',
+          'Content-Type':'application/json',
+        },
+        body: JSON.stringify(body),
+      }
+    );
+    if(r.ok){
+      setSS('ok','✓ Synced at '+new Date().toLocaleTimeString());
+      showToast('💜 Synced to GitHub! Live in ~60s');
+    } else {
+      const e=await r.json();
+      setSS('err','Error: '+(e.message||r.status));
+      showToast('⚠ Sync failed: '+(e.message||r.status),4000);
+    }
+  }catch(e){
+    setSS('err','Network error — saved locally only');
+    showToast('⚠ Could not reach GitHub. Changes saved locally.',4000);
+  }
+}
+
+async function ghTest(){
+  ghChanged();
+  if(!ghReady()){ setSS('err','Fill in all three fields first'); return; }
+  const c = ghCreds();
+  setSS('syncing','Testing…');
+  try{
+    const r = await fetch(
+      `https://api.github.com/repos/${c.user}/${c.repo}`,
+      { headers:{ Authorization:`token ${c.token}`, Accept:'application/vnd.github.v3+json' } }
+    );
+    if(r.ok){
+      const d=await r.json();
+      setSS('ok','✓ Connected — '+d.full_name);
+      setBadge(true);
+      showToast('✓ GitHub connected! Auto-sync ON 💜');
+    } else {
+      const e=await r.json();
+      setSS('err','Failed: '+(e.message||r.status));
+      setBadge(false);
+    }
+  }catch(e){ setSS('err','Network error'); }
+}
+
+// Override exportHTML to use same builder
+function exportHTML(){
+  const blob=new Blob([buildFullHTML()],{type:'text/html'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='bts-archive-custom.html';
+  a.click();
+}
+
+// ── Patch save actions to trigger GitHub push ──
+
+const _sl = saveLyrics;
+window.saveLyrics = function(){
+  _sl();
+  saveAll();
+  const song = lyricsTarget ? DATA[lyricsTarget.albumIdx]?.songs[lyricsTarget.songIdx]?.t : 'song';
+  ghPush('💜 Lyrics: ' + (song||'updated'));
+};
+
+const _ss = saveNewSong;
+window.saveNewSong = function(){
+  _ss();
+  saveAll();
+  ghPush('✦ Added new song');
+};
+
+const _ds = deleteSong;
+window.deleteSong = function(albumId,songIdx,e){
+  _ds(albumId,songIdx,e);
+  saveAll();
+  ghPush('✦ Removed song');
+};
+
+ghLoadCreds();
+
 </script>
 </body>
 </html>
