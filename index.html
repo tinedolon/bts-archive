@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BTS Song Archive</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@300;400;500&family=Space+Mono:wght@400;700&family=Playfair+Display:wght@700&family=Orbitron:wght@700&family=Righteous&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a0f;--bg2:#111118;--bg3:#1a1a24;--bg4:#22222f;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.14);
+  --text:#f0eef8;--text2:#9994b8;--text3:#5a5575;
+  --accent1:#a78bfa;--accent2:#f472b6;--accent3:#fbbf24;
+  --radius:10px;--radius-sm:6px;
+  --font-display:'Bebas Neue',sans-serif;
+  --font-body:'Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono',monospace;
+  --player-h:80px;--nav-h:56px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;overflow-x:hidden;padding-bottom:var(--player-h)}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(1px 1px at 10% 20%,rgba(167,139,250,.4) 0%,transparent 100%),radial-gradient(1px 1px at 30% 60%,rgba(244,114,182,.3) 0%,transparent 100%),radial-gradient(1px 1px at 55% 15%,rgba(103,232,249,.25) 0%,transparent 100%),radial-gradient(1px 1px at 75% 80%,rgba(167,139,250,.3) 0%,transparent 100%),radial-gradient(2px 2px at 85% 10%,rgba(251,191,36,.15) 0%,transparent 100%),radial-gradient(2px 2px at 5% 45%,rgba(167,139,250,.2) 0%,transparent 100%);pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 600px 400px at 15% 10%,rgba(124,58,237,.12) 0%,transparent 70%),radial-gradient(ellipse 500px 350px at 85% 90%,rgba(190,24,93,.1) 0%,transparent 70%);pointer-events:none;z-index:0}
+
+/* ── TOP NAV ── */
+#top-nav{position:fixed;top:0;left:0;right:0;z-index:200;height:var(--nav-h);background:rgba(10,10,15,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:8px}
+.nav-brand{font-family:var(--font-display);font-size:22px;letter-spacing:4px;background:linear-gradient(135deg,var(--accent1),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-right:24px;flex-shrink:0}
+.nav-link{padding:7px 16px;font-size:11px;font-family:var(--font-mono);letter-spacing:2px;border:1px solid transparent;border-radius:20px;cursor:pointer;color:var(--text2);background:transparent;transition:all .15s;white-space:nowrap}
+.nav-link:hover{color:var(--text);border-color:var(--border2)}
+.nav-link.active{background:linear-gradient(135deg,rgba(124,58,237,.25),rgba(190,24,93,.15));border-color:rgba(167,139,250,.4);color:var(--accent1)}
+.nav-spacer{flex:1}
+#editor-toggle-nav{padding:7px 16px;font-size:11px;font-family:var(--font-mono);letter-spacing:2px;background:linear-gradient(135deg,#7c3aed,#be185d);color:#fff;border:none;border-radius:20px;cursor:pointer;white-space:nowrap;transition:opacity .15s;flex-shrink:0}
+#editor-toggle-nav:hover{opacity:.85}
+
+/* ── PAGES ── */
+.page{display:none;position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:calc(var(--nav-h) + 32px) 20px 40px}
+.page.active{display:block}
+body.editor-open .page{margin-right:320px}
+
+/* ── EDITOR PANEL ── */
+#editor-panel{position:fixed;top:0;right:0;bottom:0;width:320px;z-index:500;background:#0f0f1a;border-left:1px solid rgba(124,58,237,.3);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);overflow:hidden}
+#editor-panel.open{transform:translateX(0)}
+.editor-header{padding:20px 20px 16px;border-bottom:1px solid rgba(255,255,255,.07);background:linear-gradient(135deg,rgba(124,58,237,.2),rgba(190,24,93,.1))}
+.editor-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;background:linear-gradient(135deg,#a78bfa,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.editor-subtitle{font-size:10px;color:rgba(255,255,255,.4);font-family:'Space Mono',monospace;letter-spacing:1px;margin-top:2px}
+.editor-body{flex:1;overflow-y:auto;padding:16px}
+.editor-body::-webkit-scrollbar{width:4px}
+.editor-body::-webkit-scrollbar-thumb{background:rgba(124,58,237,.4);border-radius:2px}
+.editor-section{margin-bottom:20px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;overflow:hidden}
+.editor-section-title{padding:10px 14px;font-size:9px;letter-spacing:3px;text-transform:uppercase;font-family:'Space Mono',monospace;color:rgba(255,255,255,.35);background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.05)}
+.editor-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.04)}
+.editor-row:last-child{border-bottom:none}
+.editor-row label{font-size:11px;color:rgba(255,255,255,.5);font-family:'Space Mono',monospace;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.editor-row input[type="color"]{width:32px;height:24px;border:1px solid rgba(255,255,255,.15);border-radius:4px;cursor:pointer;background:none;padding:1px}
+.editor-row input[type="text"],.editor-row input[type="range"],.editor-row select{flex:1.5;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:4px;color:#fff;font-family:'Space Mono',monospace;font-size:11px;padding:5px 8px;outline:none}
+.editor-row select option{background:#1a1a2e}
+.editor-row input[type="range"]{padding:0;cursor:pointer;accent-color:#a78bfa}
+.editor-footer{padding:14px 16px;border-top:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;gap:8px}
+.editor-btn{width:100%;padding:10px;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:1px;border-radius:6px;cursor:pointer;border:none;transition:all .15s}
+.editor-btn-primary{background:linear-gradient(135deg,#7c3aed,#be185d);color:#fff}
+.editor-btn-secondary{background:rgba(255,255,255,.06);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1)}
+.editor-btn:hover{opacity:.85;transform:scale(.99)}
+[contenteditable="true"]{outline:none;border-bottom:1px dashed rgba(167,139,250,.4);cursor:text}
+[contenteditable="true"]:focus{border-bottom:1px solid #a78bfa;background:rgba(167,139,250,.05)}
+.edit-hint{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(124,58,237,.9);color:#fff;padding:8px 20px;border-radius:20px;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:1px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:998}
+.edit-hint.show{opacity:1}
+
+/* ── HEADER ── */
+header{padding:40px 0 36px;text-align:center}
+.header-eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:4px;color:var(--accent1);text-transform:uppercase;margin-bottom:16px}
+.header-title{font-family:var(--font-display);font-size:clamp(64px,12vw,120px);letter-spacing:8px;line-height:.9;background:linear-gradient(135deg,var(--accent1) 0%,var(--accent2) 40%,var(--accent3) 70%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+.header-subtitle{font-family:var(--font-display);font-size:clamp(20px,4vw,36px);letter-spacing:6px;color:var(--text2);margin-bottom:12px}
+.header-desc{font-size:13px;color:var(--text3);letter-spacing:1px;font-family:var(--font-mono)}
+.header-line{width:120px;height:1px;background:linear-gradient(90deg,transparent,var(--accent1),var(--accent2),transparent);margin:28px auto}
+
+/* ── STATS ── */
+.stats-row{display:flex;gap:1px;margin-bottom:32px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--border)}
+.stat-item{flex:1;background:var(--bg2);padding:16px;text-align:center}
+.stat-num{font-family:var(--font-display);font-size:32px;background:linear-gradient(135deg,var(--accent1),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.stat-label{font-size:10px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;font-family:var(--font-mono);margin-top:4px}
+
+/* ── CONTROLS ── */
+.controls{display:flex;flex-direction:column;gap:16px;margin-bottom:32px}
+.search-bar{position:relative}
+.search-bar input{width:100%;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:14px 20px 14px 46px;font-size:14px;color:var(--text);font-family:var(--font-body);outline:none;transition:border-color .2s,box-shadow .2s}
+.search-bar input:focus{border-color:var(--accent1);box-shadow:0 0 0 3px rgba(167,139,250,.12)}
+.search-bar input::placeholder{color:var(--text3)}
+.search-icon{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:16px;pointer-events:none}
+.filter-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.filter-label{font-size:10px;color:var(--text3);letter-spacing:2px;font-family:var(--font-mono);margin-right:4px}
+.tab-btn{padding:6px 14px;font-size:11px;border:1px solid var(--border2);border-radius:20px;background:transparent;color:var(--text2);cursor:pointer;font-family:var(--font-mono);letter-spacing:1px;transition:all .15s;white-space:nowrap}
+.tab-btn:hover{border-color:var(--accent1);color:var(--accent1)}
+.tab-btn.active{background:linear-gradient(135deg,#7c3aed,#be185d);border-color:transparent;color:#fff}
+.results-info{font-family:var(--font-mono);font-size:11px;color:var(--text3);letter-spacing:1px}
+.add-song-bar{display:flex;justify-content:flex-end;margin-bottom:8px}
+.add-song-top-btn{display:flex;align-items:center;gap:8px;padding:10px 20px;font-size:11px;letter-spacing:2px;background:linear-gradient(135deg,#7c3aed,#be185d);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-family:var(--font-mono);transition:opacity .15s}
+.add-song-top-btn:hover{opacity:.85}
+
+/* ── ALBUM SECTIONS ── */
+.album-section{margin-bottom:48px}
+.album-header{display:flex;align-items:center;gap:16px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.album-badge{width:52px;height:52px;border-radius:var(--radius-sm);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;position:relative;overflow:hidden}
+.album-badge::after{content:'';position:absolute;inset:0;background:rgba(0,0,0,.25)}
+.album-badge-year{font-family:var(--font-display);font-size:18px;letter-spacing:1px;position:relative;z-index:1;color:#fff}
+.album-badge-type{font-size:8px;letter-spacing:2px;text-transform:uppercase;position:relative;z-index:1;color:rgba(255,255,255,.7);font-family:var(--font-mono)}
+.album-name{font-family:var(--font-display);font-size:22px;letter-spacing:3px;line-height:1.1}
+.album-meta{font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-top:4px;letter-spacing:1px}
+.member-tag{margin-left:auto;padding:4px 12px;border-radius:20px;font-size:10px;font-family:var(--font-mono);letter-spacing:2px;border:1px solid;white-space:nowrap}
+.songs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:6px}
+
+/* ── SONG CARD ── */
+.song-card{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);transition:border-color .2s,background .2s,transform .1s;position:relative;overflow:hidden}
+.song-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:transparent;transition:background .2s}
+.song-card:hover{background:var(--bg3);border-color:var(--border2);transform:translateX(2px)}
+.song-card:hover::before{background:linear-gradient(180deg,var(--accent1),var(--accent2))}
+.track-num{font-family:var(--font-mono);font-size:11px;color:var(--text3);min-width:22px;text-align:right;flex-shrink:0}
+.song-text{flex:1;min-width:0;cursor:pointer}
+.song-romanized{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.3px}
+.song-hangul{font-size:11px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.song-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.song-duration{font-family:var(--font-mono);font-size:11px;color:var(--text3)}
+.lyrics-btn{padding:4px 10px;font-size:10px;border:1px solid var(--border2);border-radius:12px;color:var(--text3);cursor:pointer;background:transparent;font-family:var(--font-mono);letter-spacing:.5px;transition:all .15s;white-space:nowrap}
+.lyrics-btn:hover{border-color:var(--accent1);color:var(--accent1);background:rgba(167,139,250,.08)}
+.lyrics-btn.has-lyrics{border-color:rgba(167,139,250,.4);color:var(--accent1)}
+.delete-song-btn{width:22px;height:22px;border-radius:50%;background:rgba(220,38,38,.0);border:1px solid transparent;color:rgba(220,38,38,0);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.song-card:hover .delete-song-btn{background:rgba(220,38,38,.15);border-color:rgba(220,38,38,.4);color:rgba(220,38,38,.8)}
+.delete-song-btn:hover{background:rgba(220,38,38,.3) !important;color:#fff !important}
+
+/* ── MEMBER COLORS ── */
+.member-jin .album-badge{background:linear-gradient(135deg,#be185d,#9d174d)}
+.member-jin .member-tag{color:#f9a8d4;border-color:#be185d;background:rgba(190,24,93,.1)}
+.member-suga .album-badge{background:linear-gradient(135deg,#1e3a5f,#0f172a)}
+.member-suga .member-tag{color:#93c5fd;border-color:#1e40af;background:rgba(30,64,175,.12)}
+.member-jhope .album-badge{background:linear-gradient(135deg,#b45309,#78350f)}
+.member-jhope .member-tag{color:#fcd34d;border-color:#b45309;background:rgba(180,83,9,.12)}
+.member-rm .album-badge{background:linear-gradient(135deg,#065f46,#022c22)}
+.member-rm .member-tag{color:#6ee7b7;border-color:#065f46;background:rgba(6,95,70,.12)}
+.member-jimin .album-badge{background:linear-gradient(135deg,#7c3aed,#4c1d95)}
+.member-jimin .member-tag{color:#c4b5fd;border-color:#7c3aed;background:rgba(124,58,237,.12)}
+.member-v .album-badge{background:linear-gradient(135deg,#0e7490,#164e63)}
+.member-v .member-tag{color:#67e8f9;border-color:#0e7490;background:rgba(14,116,144,.12)}
+.member-jk .album-badge{background:linear-gradient(135deg,#7f1d1d,#450a0a)}
+.member-jk .member-tag{color:#fca5a5;border-color:#991b1b;background:rgba(153,27,27,.12)}
+.no-results{padding:80px 20px;text-align:center;color:var(--text3)}
+.no-results-icon{font-family:var(--font-display);font-size:64px;letter-spacing:4px;color:var(--border2);margin-bottom:16px}
+footer{border-top:1px solid var(--border);padding:40px 0;text-align:center;margin-top:60px}
+.footer-text{font-family:var(--font-mono);font-size:11px;color:var(--text3);letter-spacing:2px;line-height:2}
+.footer-purple{color:var(--accent1)}
+
+/* ── SPOTIFY PLAYER ── */
+#spotify-bar{position:fixed;bottom:0;left:0;right:0;z-index:300;height:var(--player-h);background:rgba(8,8,14,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--border2);display:flex;align-items:center;padding:0 20px;gap:16px}
+body.editor-open #spotify-bar{margin-right:320px}
+.spotify-logo{flex-shrink:0;display:flex;align-items:center;gap:8px}
+.spotify-logo svg{width:22px;height:22px;fill:#1DB954}
+.spotify-logo span{font-family:var(--font-mono);font-size:10px;color:#1DB954;letter-spacing:2px}
+.spotify-divider{width:1px;height:36px;background:var(--border2);flex-shrink:0}
+.spotify-embed-wrap{flex:1;height:60px;overflow:hidden;border-radius:8px}
+.spotify-embed-wrap iframe{width:100%;height:80px;margin-top:-10px;border:none}
+.spotify-input-area{display:flex;gap:8px;flex-shrink:0;align-items:center}
+.spotify-url-input{width:220px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;font-size:11px;color:var(--text);font-family:var(--font-mono);outline:none;transition:border-color .2s}
+.spotify-url-input:focus{border-color:#1DB954}
+.spotify-url-input::placeholder{color:var(--text3)}
+.spotify-load-btn{padding:8px 14px;font-size:10px;letter-spacing:1px;background:#1DB954;color:#000;border:none;border-radius:8px;cursor:pointer;font-family:var(--font-mono);font-weight:700;transition:opacity .15s;white-space:nowrap;flex-shrink:0}
+.spotify-load-btn:hover{opacity:.85}
+.spotify-hint{font-size:10px;color:var(--text3);font-family:var(--font-mono);letter-spacing:.5px;white-space:nowrap;flex-shrink:0;max-width:160px;line-height:1.4}
+
+/* ── GALLERY ── */
+.gallery-hero{text-align:center;margin-bottom:40px}
+.gallery-hero h1{font-family:var(--font-display);font-size:clamp(40px,8vw,80px);letter-spacing:6px;background:linear-gradient(135deg,var(--accent1),var(--accent2),var(--accent3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.gallery-hero p{font-family:var(--font-mono);font-size:11px;color:var(--text3);letter-spacing:2px;margin-top:8px}
+.gallery-line{width:80px;height:1px;background:linear-gradient(90deg,transparent,var(--accent1),var(--accent2),transparent);margin:20px auto 0}
+.gallery-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:28px;flex-wrap:wrap}
+.gallery-toolbar-left{display:flex;gap:8px;flex-wrap:wrap}
+.upload-btn{display:flex;align-items:center;gap:8px;padding:10px 20px;font-size:11px;letter-spacing:2px;background:linear-gradient(135deg,#7c3aed,#be185d);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-family:var(--font-mono);transition:opacity .15s}
+.upload-btn:hover{opacity:.85}
+#photo-file-input{display:none}
+.gallery-count{font-family:var(--font-mono);font-size:11px;color:var(--text3);letter-spacing:1px;margin-left:auto}
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.photo-card{position:relative;border-radius:var(--radius);overflow:hidden;background:var(--bg2);border:1px solid var(--border);aspect-ratio:1;cursor:pointer;transition:transform .2s,border-color .2s}
+.photo-card:hover{transform:scale(1.02);border-color:var(--border2)}
+.photo-card img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-card-overlay{position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(0,0,0,.8) 100%);opacity:0;transition:opacity .2s;display:flex;flex-direction:column;justify-content:flex-end;padding:12px}
+.photo-card:hover .photo-card-overlay{opacity:1}
+.photo-card-name{font-size:11px;color:#fff;font-family:var(--font-mono);letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.photo-delete-btn{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(220,38,38,.85);color:#fff;border:none;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;z-index:2}
+.photo-card:hover .photo-delete-btn{opacity:1}
+.photo-delete-btn:hover{background:#dc2626}
+.photo-empty{grid-column:1/-1;padding:80px 20px;text-align:center;border:2px dashed var(--border2);border-radius:var(--radius)}
+.photo-empty-icon{font-size:48px;margin-bottom:16px;color:var(--border2);font-family:var(--font-display);letter-spacing:2px}
+.photo-empty p{font-family:var(--font-mono);font-size:12px;color:var(--text3);letter-spacing:1px;line-height:2}
+
+/* ── LIGHTBOX ── */
+#lightbox{position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;cursor:zoom-out}
+#lightbox.open{display:flex}
+#lightbox img{max-width:90vw;max-height:88vh;object-fit:contain;border-radius:var(--radius);box-shadow:0 0 80px rgba(167,139,250,.2)}
+#lightbox-close{position:absolute;top:20px;right:24px;font-size:28px;color:rgba(255,255,255,.6);cursor:pointer;background:none;border:none;font-family:var(--font-mono);transition:color .15s}
+#lightbox-close:hover{color:#fff}
+#lightbox-caption{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-family:var(--font-mono);font-size:12px;color:rgba(255,255,255,.5);letter-spacing:1px}
+.gallery-drop-zone{border:2px dashed var(--border2);border-radius:var(--radius);padding:32px;text-align:center;margin-bottom:24px;transition:border-color .2s,background .2s;cursor:pointer}
+.gallery-drop-zone.dragging{border-color:var(--accent1);background:rgba(167,139,250,.05)}
+.gallery-drop-zone p{font-family:var(--font-mono);font-size:12px;color:var(--text3);letter-spacing:1px;line-height:2}
+.gallery-drop-zone span{color:var(--accent1)}
+
+/* ══ MODALS ══ */
+.modal-overlay{position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;width:100%;max-width:560px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 0 60px rgba(124,58,237,.25);overflow:hidden}
+.modal-header{padding:24px 24px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,rgba(124,58,237,.12),rgba(190,24,93,.08))}
+.modal-title{font-family:var(--font-display);font-size:22px;letter-spacing:3px;background:linear-gradient(135deg,var(--accent1),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.modal-close{background:none;border:none;color:var(--text3);font-size:22px;cursor:pointer;font-family:var(--font-mono);transition:color .15s;line-height:1}
+.modal-close:hover{color:var(--text)}
+.modal-body{padding:24px;overflow-y:auto;flex:1}
+.modal-body::-webkit-scrollbar{width:4px}
+.modal-body::-webkit-scrollbar-thumb{background:rgba(124,58,237,.3);border-radius:2px}
+.form-group{margin-bottom:18px}
+.form-label{display:block;font-family:var(--font-mono);font-size:10px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:8px}
+.form-input,.form-select,.form-textarea{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;color:var(--text);font-family:var(--font-body);outline:none;transition:border-color .2s,box-shadow .2s}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent1);box-shadow:0 0 0 3px rgba(167,139,250,.1)}
+.form-input::placeholder,.form-textarea::placeholder{color:var(--text3)}
+.form-select option{background:var(--bg2)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-textarea{resize:vertical;min-height:120px;line-height:1.7;font-size:13px}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end}
+.btn-primary{padding:10px 24px;background:linear-gradient(135deg,#7c3aed,#be185d);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-family:var(--font-mono);font-size:11px;letter-spacing:1px;transition:opacity .15s}
+.btn-primary:hover{opacity:.85}
+.btn-ghost{padding:10px 20px;background:transparent;color:var(--text3);border:1px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;font-family:var(--font-mono);font-size:11px;letter-spacing:1px;transition:all .15s}
+.btn-ghost:hover{border-color:var(--border2);color:var(--text)}
+
+/* ── LYRICS MODAL SPECIFIC ── */
+.lyrics-song-title{font-family:var(--font-display);font-size:28px;letter-spacing:3px;background:linear-gradient(135deg,var(--accent1),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px}
+.lyrics-song-meta{font-family:var(--font-mono);font-size:11px;color:var(--text3);letter-spacing:1px;margin-bottom:20px}
+.lyrics-display{font-family:var(--font-body);font-size:14px;line-height:2;color:var(--text2);white-space:pre-wrap;padding:16px;background:var(--bg3);border-radius:var(--radius-sm);border:1px solid var(--border);min-height:120px}
+.lyrics-edit-area{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:16px;font-size:13px;color:var(--text);font-family:var(--font-body);outline:none;resize:vertical;min-height:200px;line-height:2;transition:border-color .2s,box-shadow .2s}
+.lyrics-edit-area:focus{border-color:var(--accent1);box-shadow:0 0 0 3px rgba(167,139,250,.1)}
+.lyrics-edit-area::placeholder{color:var(--text3)}
+.lyrics-empty{text-align:center;padding:40px 20px;color:var(--text3);font-family:var(--font-mono);font-size:12px;letter-spacing:1px;line-height:2}
+.lyrics-empty-icon{font-size:40px;margin-bottom:12px;color:var(--border2)}
+.lyrics-mode-toggle{display:flex;gap:8px;margin-bottom:16px}
+.mode-btn{flex:1;padding:8px;font-family:var(--font-mono);font-size:10px;letter-spacing:1px;border:1px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;background:transparent;color:var(--text3);transition:all .15s}
+.mode-btn.active{background:rgba(167,139,250,.15);border-color:var(--accent1);color:var(--accent1)}
+.new-album-row{display:flex;gap:8px;margin-top:6px}
+.new-album-row .form-input{flex:1}
+.new-album-row button{padding:10px 14px;background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.3);border-radius:var(--radius-sm);color:var(--accent1);cursor:pointer;font-family:var(--font-mono);font-size:10px;white-space:nowrap;transition:all .15s}
+.new-album-row button:hover{background:rgba(167,139,250,.25)}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes modalIn{from{opacity:0;transform:scale(.96) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-overlay.open .modal{animation:modalIn .2s ease both}
+.photo-card{animation:fadeUp .3s ease both}
+header{animation:fadeUp .5s ease both}
+.stats-row{animation:fadeUp .5s .08s ease both}
+.controls{animation:fadeUp .5s .16s ease both}
+
+@media(max-width:640px){
+  .songs-grid{grid-template-columns:1fr}
+  .photo-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+  .spotify-input-area{display:none}
+  body.editor-open .page{margin-right:0}
+  .spotify-hint{display:none}
+  #top-nav{padding:0 12px;gap:4px}
+  .nav-brand{font-size:18px;margin-right:8px}
+  .form-row{grid-template-columns:1fr}
+  .modal{max-width:100%;border-radius:12px}
+}
+</style>
+</head>
+<body>
+
+<!-- ── TOP NAV ── -->
+<nav id="top-nav">
+  <div class="nav-brand">BTS</div>
+  <button class="nav-link active" onclick="showPage('songs',this)">♪ Songs</button>
+  <button class="nav-link" onclick="showPage('gallery',this)">✦ Gallery</button>
+  <div class="nav-spacer"></div>
+  <button id="editor-toggle-nav" onclick="toggleEditor()">✦ Edit Site</button>
+</nav>
+
+<!-- ── EDITOR PANEL ── -->
+<div id="editor-panel">
+  <div class="editor-header">
+    <div class="editor-title">Site Editor</div>
+    <div class="editor-subtitle">Customize your archive</div>
+  </div>
+  <div class="editor-body">
+    <div class="editor-section">
+      <div class="editor-section-title">Colors</div>
+      <div class="editor-row"><label>Background</label><input type="color" value="#0a0a0f" oninput="setVar('--bg',this.value)"></div>
+      <div class="editor-row"><label>Card Background</label><input type="color" value="#111118" oninput="setVar('--bg2',this.value)"></div>
+      <div class="editor-row"><label>Primary Text</label><input type="color" value="#f0eef8" oninput="setVar('--text',this.value)"></div>
+      <div class="editor-row"><label>Accent 1 (Purple)</label><input type="color" value="#a78bfa" oninput="setVar('--accent1',this.value)"></div>
+      <div class="editor-row"><label>Accent 2 (Pink)</label><input type="color" value="#f472b6" oninput="setVar('--accent2',this.value)"></div>
+      <div class="editor-row"><label>Accent 3 (Gold)</label><input type="color" value="#fbbf24" oninput="setVar('--accent3',this.value)"></div>
+      <div class="editor-row"><label>Muted Text</label><input type="color" value="#9994b8" oninput="setVar('--text2',this.value)"></div>
+    </div>
+    <div class="editor-section">
+      <div class="editor-section-title">Typography</div>
+      <div class="editor-row"><label>Display Font</label>
+        <select onchange="setFont('--font-display',this.value)">
+          <option value="'Bebas Neue',sans-serif">Bebas Neue</option>
+          <option value="'Orbitron',sans-serif">Orbitron</option>
+          <option value="'Righteous',sans-serif">Righteous</option>
+          <option value="'Playfair Display',serif">Playfair Display</option>
+        </select>
+      </div>
+      <div class="editor-row"><label>Body Font</label>
+        <select onchange="setFont('--font-body',this.value)">
+          <option value="'Noto Sans KR',sans-serif">Noto Sans KR</option>
+          <option value="'Space Mono',monospace">Space Mono</option>
+          <option value="'Playfair Display',serif">Playfair Display</option>
+        </select>
+      </div>
+    </div>
+    <div class="editor-section">
+      <div class="editor-section-title">Layout</div>
+      <div class="editor-row"><label>Card Border Radius</label><input type="range" min="0" max="20" value="10" oninput="setVar('--radius',this.value+'px')"></div>
+      <div class="editor-row"><label>Max Width</label>
+        <select onchange="document.querySelectorAll('.page').forEach(p=>p.style.maxWidth=this.value)">
+          <option value="1200px">Wide (1200px)</option>
+          <option value="960px">Medium (960px)</option>
+          <option value="720px">Narrow (720px)</option>
+          <option value="100%">Full Width</option>
+        </select>
+      </div>
+    </div>
+    <div class="editor-section">
+      <div class="editor-section-title">Presets</div>
+      <div class="editor-row" style="flex-direction:column;align-items:stretch;gap:6px">
+        <button class="editor-btn editor-btn-secondary" onclick="applyPreset('dark')">💜 BTS Dark (Default)</button>
+        <button class="editor-btn editor-btn-secondary" onclick="applyPreset('light')">☀ Light Mode</button>
+        <button class="editor-btn editor-btn-secondary" onclick="applyPreset('midnight')">🌙 Midnight Blue</button>
+        <button class="editor-btn editor-btn-secondary" onclick="applyPreset('rose')">🌸 Rose Gold</button>
+        <button class="editor-btn editor-btn-secondary" onclick="applyPreset('army')">💚 ARMY Green</button>
+      </div>
+    </div>
+    <div class="editor-section">
+      <div class="editor-section-title">Inline Editing</div>
+      <div class="editor-row" style="flex-direction:column;align-items:stretch;gap:6px">
+        <button class="editor-btn editor-btn-secondary" onclick="toggleInlineEdit()"><span id="inline-edit-label">Enable Click-to-Edit Text</span></button>
+        <p style="font-size:10px;color:rgba(255,255,255,.3);font-family:'Space Mono',monospace;line-height:1.6;padding:0 2px">Click on titles, subtitles, album names and footer text to edit directly.</p>
+      </div>
+    </div>
+  </div>
+  <div class="editor-footer">
+    <div style="font-family:'Space Mono',monospace;font-size:9px;color:rgba(255,255,255,.25);letter-spacing:1px;text-align:center;padding:4px 0 8px;line-height:1.8">💾 Auto-saves lyrics, photos & songs</div>
+    <button class="editor-btn editor-btn-primary" onclick="exportHTML()">⬇ Download Edited HTML</button>
+    <button class="editor-btn editor-btn-secondary" onclick="resetAll()">↺ Reset Theme & Text</button>
+    <button class="editor-btn editor-btn-secondary" style="color:rgba(220,38,38,.7);border-color:rgba(220,38,38,.25)" onclick="clearAllData()">🗑 Clear All Saved Data</button>
+  </div>
+</div>
+
+<div class="edit-hint" id="edit-hint">Click any highlighted text to edit it</div>
+
+<!-- ══ LIGHTBOX ══ -->
+<div id="lightbox" onclick="closeLightbox(event)">
+  <button id="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightbox-img" src="" alt="">
+  <div id="lightbox-caption"></div>
+</div>
+
+<!-- ══ ADD SONG MODAL ══ -->
+<div class="modal-overlay" id="addSongModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add New Song</div>
+      <button class="modal-close" onclick="closeModal('addSongModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Album / Collection</label>
+        <select class="form-select" id="as-album" onchange="handleAlbumSelect(this)"></select>
+        <div class="new-album-row" id="newAlbumRow" style="display:none">
+          <input class="form-input" id="as-new-album-name" placeholder="Album name (e.g. GOLDEN)">
+          <select class="form-select" id="as-new-album-cat" style="flex:0.8">
+            <option value="group">Group</option>
+            <option value="rm">RM</option>
+            <option value="jin">Jin</option>
+            <option value="suga">Suga</option>
+            <option value="jhope">J-Hope</option>
+            <option value="jimin">Jimin</option>
+            <option value="v">V</option>
+            <option value="jk">Jungkook</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Romanized Title *</label>
+          <input class="form-input" id="as-title" placeholder="e.g. Spring Day">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Korean Title</label>
+          <input class="form-input" id="as-hangul" placeholder="e.g. 봄날">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Duration</label>
+          <input class="form-input" id="as-duration" placeholder="e.g. 4:26">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Romanized Lyrics (optional)</label>
+          <input class="form-input" id="as-lyrics-preview" placeholder="Add lyrics later via song card">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Your Romanized Lyrics</label>
+        <textarea class="form-textarea" id="as-lyrics" placeholder="Paste or type the romanized lyrics here...&#10;&#10;You can also add/edit lyrics later by clicking on any song card." style="min-height:140px"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('addSongModal')">Cancel</button>
+      <button class="btn-primary" onclick="saveNewSong()">✦ Add Song</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LYRICS MODAL ══ -->
+<div class="modal-overlay" id="lyricsModal">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="lm-title"></div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);letter-spacing:1px;margin-top:4px" id="lm-meta"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('lyricsModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="lyrics-mode-toggle">
+        <button class="mode-btn active" id="modeView" onclick="setLyricsMode('view')">👁 View</button>
+        <button class="mode-btn" id="modeEdit" onclick="setLyricsMode('edit')">✏ Edit</button>
+      </div>
+      <div id="lyricsViewPane"></div>
+      <textarea class="lyrics-edit-area" id="lyricsEditArea" placeholder="Type or paste the romanized lyrics here...&#10;&#10;Example:&#10;Nal bwa gorago isseo&#10;Ne nuni bichnaneun goseul&#10;Nal bomyeo utgo isseo&#10;..."></textarea>
+    </div>
+    <div class="modal-footer" id="lyricsModalFooter">
+      <button class="btn-ghost" onclick="closeModal('lyricsModal')">Close</button>
+      <button class="btn-primary" id="saveLyricsBtn" onclick="saveLyrics()" style="display:none">💾 Save Lyrics</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE: SONGS ══ -->
+<div class="page active" id="page-songs">
+  <header>
+    <div class="header-eyebrow" id="eyebrow-text">★ 방탄소년단 ★ bangtan sonyeondan ★</div>
+    <div class="header-title" id="site-title">BTS</div>
+    <div class="header-subtitle" id="site-subtitle">Song Archive</div>
+    <div class="header-desc" id="site-desc">Romanized Titles · Full Discography · Solo Works</div>
+    <div class="header-line"></div>
+  </header>
+  <div class="stats-row">
+    <div class="stat-item"><div class="stat-num" id="statSongs">0</div><div class="stat-label">Songs</div></div>
+    <div class="stat-item"><div class="stat-num" id="statAlbums">0</div><div class="stat-label">Albums</div></div>
+    <div class="stat-item"><div class="stat-num" id="statSolo">0</div><div class="stat-label">Solo</div></div>
+    <div class="stat-item"><div class="stat-num" id="statYears">13</div><div class="stat-label">Years</div></div>
+  </div>
+  <div class="controls">
+    <div class="search-bar">
+      <span class="search-icon">♪</span>
+      <input type="text" id="search" placeholder="Search songs in romanized or Korean..." oninput="render()">
+    </div>
+    <div class="filter-row">
+      <span class="filter-label">FILTER:</span>
+      <div id="filterBtns"></div>
+    </div>
+    <div class="results-info" id="resultsInfo"></div>
+  </div>
+  <div class="add-song-bar">
+    <button class="add-song-top-btn" onclick="openAddSong()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Song
+    </button>
+  </div>
+  <div id="content"></div>
+  <footer>
+    <div class="footer-text" id="footer-text">
+      BTS Song Archive · Romanized Titles Reference<br>
+      <span class="footer-purple" id="footer-tagline">Purple You 💜</span> · Click any song to view or add romanized lyrics<br>
+      RM · Jin · Suga · J-Hope · Jimin · V · Jungkook
+    </div>
+  </footer>
+</div>
+
+<!-- ══ PAGE: GALLERY ══ -->
+<div class="page" id="page-gallery">
+  <div class="gallery-hero">
+    <h1>Photo Gallery</h1>
+    <p>Your personal BTS photo collection</p>
+    <div class="gallery-line"></div>
+  </div>
+  <div class="gallery-drop-zone" id="dropZone" onclick="document.getElementById('photo-file-input').click()">
+    <p>✦ Drag &amp; drop photos here ✦<br><span>or click to browse files</span><br><span style="font-size:10px;opacity:.5">JPG · PNG · GIF · WEBP supported</span></p>
+  </div>
+  <div class="gallery-toolbar">
+    <div class="gallery-toolbar-left">
+      <button class="upload-btn" onclick="document.getElementById('photo-file-input').click()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Add Photos
+      </button>
+      <button class="upload-btn" style="background:linear-gradient(135deg,rgba(220,38,38,.7),rgba(153,27,27,.8))" onclick="clearAllPhotos()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+        Clear All
+      </button>
+    </div>
+    <div class="gallery-count" id="photoCount">0 photos</div>
+  </div>
+  <div class="photo-grid" id="photoGrid">
+    <div class="photo-empty">
+      <div class="photo-empty-icon">✦</div>
+      <p>No photos yet<br>Add your BTS photos above<br><span style="color:var(--accent1)">Drag &amp; drop or click Add Photos</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- ── SPOTIFY BAR ── -->
+<div id="spotify-bar">
+  <div class="spotify-logo">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+    <span>SPOTIFY</span>
+  </div>
+  <div class="spotify-divider"></div>
+  <div class="spotify-embed-wrap">
+    <iframe id="spotifyFrame" src="https://open.spotify.com/embed/artist/3Nrfpe0tUJi4K4DXAXJGnp?utm_source=generator&theme=0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+  </div>
+  <div class="spotify-divider"></div>
+  <div class="spotify-input-area">
+    <input class="spotify-url-input" id="spotifyUrlInput" type="text" placeholder="Paste Spotify song/album/playlist URL…" onkeydown="if(event.key==='Enter')loadSpotify()">
+    <button class="spotify-load-btn" onclick="loadSpotify()">▶ Load</button>
+  </div>
+  <div class="spotify-hint">Paste any Spotify<br>track, album or<br>playlist link</div>
+</div>
+
+<input type="file" id="photo-file-input" accept="image/*" multiple onchange="handleFileSelect(this.files)">
+
+<script>
+// ══════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════
+let DATA=[
+  {id:"debut",name:"2 Cool 4 Skool / O!RUL8,2?",year:"2013",type:"EP",category:"group",songs:[{t:"No More Dream",h:"노 모어 드림",d:"3:42",l:""},{t:"We Are Bulletproof Pt.2",h:"우린 방탄소년단",d:"3:39",l:""},{t:"N.O",h:"N.O",d:"3:42",l:""},{t:"Attack on Bangtan",h:"진격의 방탄",d:"3:23",l:""},{t:"Converse High",h:"컨버스 하이",d:"3:29",l:""},{t:"I Like It",h:"좋아요",d:"3:37",l:""},{t:"If I Ruled the World",h:"내가 왕이라면",d:"3:52",l:""}]},
+  {id:"skool",name:"Skool Luv Affair",year:"2014",type:"Mini Album",category:"group",songs:[{t:"Intro: Skool Luv Affair",h:"인트로",d:"1:24",l:""},{t:"Boy In Luv",h:"상남자",d:"3:52",l:""},{t:"Just One Day",h:"하루만",d:"4:37",l:""},{t:"Tomorrow",h:"내일",d:"4:30",l:""},{t:"BTS Cypher Pt.2: Triptych",h:"BTS 사이퍼 Part 2",d:"4:35",l:""},{t:"Spine Breaker",h:"등골브레이커",d:"3:25",l:""},{t:"Jump",h:"점프",d:"3:36",l:""}]},
+  {id:"dark",name:"Dark & Wild",year:"2014",type:"Full Album",category:"group",songs:[{t:"Intro: What Am I to You",h:"인트로",d:"2:08",l:""},{t:"Danger",h:"위험",d:"4:12",l:""},{t:"War of Hormone",h:"호르몬 전쟁",d:"3:42",l:""},{t:"Hip Hop Lover",h:"힙합성애자",d:"4:10",l:""},{t:"Let Me Know",h:"알아줘",d:"4:43",l:""},{t:"Rain",h:"빗소리",d:"4:32",l:""},{t:"BTS Cypher Pt.3: Killer",h:"BTS 사이퍼 Part 3",d:"5:03",l:""},{t:"Move",h:"이사",d:"3:58",l:""}]},
+  {id:"hyyh1",name:"Hwa Yang Yeon Hwa Pt.1",year:"2015",type:"Mini Album",category:"group",songs:[{t:"Intro: The Most Beautiful Moment",h:"인트로 화양연화",d:"2:19",l:""},{t:"I Need U",h:"아이 니드 유",d:"3:41",l:""},{t:"Hold Me Tight",h:"잡아줘",d:"3:46",l:""},{t:"Dope",h:"쩔어",d:"3:59",l:""},{t:"Boyz with Fun",h:"흥탄소년단",d:"3:52",l:""},{t:"Moving On",h:"이사",d:"3:58",l:""}]},
+  {id:"hyyh2",name:"Hwa Yang Yeon Hwa Pt.2",year:"2015",type:"Mini Album",category:"group",songs:[{t:"Intro: Never Mind",h:"인트로 네버 마인드",d:"1:50",l:""},{t:"Run",h:"런",d:"3:59",l:""},{t:"Butterfly",h:"버터플라이",d:"5:02",l:""},{t:"Whalien 52",h:"고래",d:"4:17",l:""},{t:"Ma City",h:"마 시티",d:"3:37",l:""},{t:"Silver Spoon",h:"뱁새",d:"3:55",l:""},{t:"Autumn Leaves",h:"고엽",d:"5:11",l:""}]},
+  {id:"wings",name:"Wings",year:"2016",type:"Full Album",category:"group",songs:[{t:"Intro: Boy Meets Evil",h:"인트로",d:"3:27",l:""},{t:"Blood Sweat & Tears",h:"피 땀 눈물",d:"3:42",l:""},{t:"Begin",h:"비긴",d:"3:37",l:""},{t:"Lie",h:"라이",d:"4:02",l:""},{t:"Stigma",h:"스티그마",d:"3:59",l:""},{t:"First Love",h:"초심",d:"5:01",l:""},{t:"Reflection",h:"리플렉션",d:"4:37",l:""},{t:"MAMA",h:"마마",d:"3:54",l:""},{t:"Awake",h:"어웨이크",d:"4:39",l:""},{t:"Lost",h:"로스트",d:"4:14",l:""},{t:"BTS Cypher Pt.4",h:"BTS 사이퍼 Part 4",d:"5:07",l:""},{t:"Am I Wrong",h:"암 아이 롱",d:"3:45",l:""},{t:"21st Century Girl",h:"21세기 소녀",d:"3:49",l:""},{t:"Two! Three!",h:"둘! 셋!",d:"4:16",l:""}]},
+  {id:"her",name:"Love Yourself: Her",year:"2017",type:"Mini Album",category:"group",songs:[{t:"Serendipity",h:"세렌디피티",d:"3:36",l:""},{t:"DNA",h:"디 엔 에이",d:"3:44",l:""},{t:"Best of Me",h:"베스트 오브 미",d:"3:54",l:""},{t:"Dimple",h:"보조개",d:"3:47",l:""},{t:"Pied Piper",h:"피리 부는 사나이",d:"3:40",l:""},{t:"MIC Drop",h:"마이크 드롭",d:"3:18",l:""},{t:"Go Go",h:"고민보다 GO",d:"3:32",l:""},{t:"Outro: Her",h:"아웃트로: 허",d:"3:28",l:""}]},
+  {id:"tear",name:"Love Yourself: Tear",year:"2018",type:"Full Album",category:"group",songs:[{t:"Intro: Singularity",h:"인트로",d:"3:26",l:""},{t:"Fake Love",h:"페이크 러브",d:"4:02",l:""},{t:"The Truth Untold",h:"전하지 못한 진심",d:"4:53",l:""},{t:"134340",h:"134340",d:"4:17",l:""},{t:"Paradise",h:"낙원",d:"4:02",l:""},{t:"Love Maze",h:"러브 메이즈",d:"3:34",l:""},{t:"Magic Shop",h:"매직 샵",d:"5:11",l:""},{t:"Airplane Pt.2",h:"비행기 Part 2",d:"3:44",l:""},{t:"Anpanman",h:"앙팡맨",d:"3:27",l:""},{t:"So What",h:"쏘 왓",d:"3:16",l:""},{t:"Outro: Tear",h:"아웃트로 티어",d:"3:32",l:""}]},
+  {id:"answer",name:"Love Yourself: Answer",year:"2018",type:"Full Album",category:"group",songs:[{t:"Trivia 起: Just Dance",h:"트리비아",d:"3:43",l:""},{t:"Euphoria",h:"유포리아",d:"5:15",l:""},{t:"Trivia 轉: Seesaw",h:"트리비아",d:"4:03",l:""},{t:"IDOL",h:"아이돌",d:"3:43",l:""},{t:"Epiphany",h:"에피파니",d:"4:00",l:""},{t:"Trivia 承: Love",h:"트리비아",d:"3:41",l:""},{t:"Answer: Love Myself",h:"어나서 러브 마이셀프",d:"3:55",l:""},{t:"MIC Drop (Steve Aoki Remix)",h:"마이크 드롭 리믹스",d:"4:05",l:""}]},
+  {id:"persona",name:"Map of the Soul: Persona",year:"2019",type:"Mini Album",category:"group",songs:[{t:"Intro: Persona",h:"인트로: 페르소나",d:"3:27",l:""},{t:"Boy with Luv",h:"작은 것들을 위한 시",d:"3:49",l:""},{t:"Mikrokosmos",h:"소우주",d:"3:59",l:""},{t:"Make It Right",h:"메이크 잇 라이트",d:"3:22",l:""},{t:"HOME",h:"홈",d:"3:43",l:""},{t:"Jamais Vu",h:"자메뷰",d:"4:12",l:""},{t:"Dionysus",h:"디오니소스",d:"4:04",l:""}]},
+  {id:"7",name:"Map of the Soul: 7",year:"2020",type:"Full Album",category:"group",songs:[{t:"Interlude: Shadow",h:"인터루드 그림자",d:"3:35",l:""},{t:"Black Swan",h:"블랙 스완",d:"3:43",l:""},{t:"Filter",h:"필터",d:"3:39",l:""},{t:"My Time",h:"시차",d:"3:46",l:""},{t:"Louder than Bombs",h:"우리에게",d:"4:05",l:""},{t:"ON",h:"온",d:"4:05",l:""},{t:"Inner Child",h:"이너 차일드",d:"4:07",l:""},{t:"Friends",h:"친구",d:"3:36",l:""},{t:"Moon",h:"문",d:"3:47",l:""},{t:"Respect",h:"리스펙트",d:"3:08",l:""},{t:"We are Bulletproof: the Eternal",h:"우리는 영원히 방탄",d:"4:03",l:""},{t:"Outro: Ego",h:"아웃트로: 에고",d:"4:17",l:""},{t:"UGH!",h:"욱",d:"3:51",l:""},{t:"00:00 (Zero O'Clock)",h:"영시",d:"4:28",l:""},{t:"Telepathy",h:"병",d:"3:15",l:""}]},
+  {id:"be",name:"BE",year:"2020",type:"Full Album",category:"group",songs:[{t:"Life Goes On",h:"라이프 고즈 온",d:"3:37",l:""},{t:"Fly to My Room",h:"내 방을 여행하는 법",d:"3:48",l:""},{t:"Blue & Grey",h:"블루 앤 그레이",d:"5:09",l:""},{t:"Telepathy",h:"병",d:"3:15",l:""},{t:"Dis-ease",h:"병",d:"4:07",l:""},{t:"Stay",h:"스테이",d:"3:44",l:""},{t:"Dynamite",h:"다이너마이트",d:"3:19",l:""}]},
+  {id:"butter",name:"Butter / Permission to Dance",year:"2021",type:"Single",category:"group",songs:[{t:"Butter",h:"버터",d:"2:44",l:""},{t:"Permission to Dance",h:"퍼미션 투 댄스",d:"3:17",l:""},{t:"Butter (Hotter Remix)",h:"버터 핫터",d:"2:50",l:""},{t:"Butter (Sweeter Remix)",h:"버터 스위터",d:"2:49",l:""}]},
+  {id:"proof",name:"Proof",year:"2022",type:"Anthology",category:"group",songs:[{t:"Born Singer",h:"본 싱어",d:"4:13",l:""},{t:"Run BTS",h:"달려라 방탄",d:"3:02",l:""},{t:"For Youth",h:"청춘의 문",d:"3:09",l:""},{t:"Yet to Come",h:"The Most Beautiful Moment",d:"3:20",l:""},{t:"Spring Day",h:"봄날",d:"4:50",l:""},{t:"Fake Love",h:"페이크 러브",d:"4:02",l:""},{t:"Butter",h:"버터",d:"2:44",l:""}]},
+  {id:"take-two",name:"Take Two / The Planet",year:"2023",type:"Singles",category:"group",songs:[{t:"Take Two",h:"테이크 투",d:"3:04",l:""},{t:"The Planet",h:"더 플래닛",d:"3:43",l:""}]},
+  {id:"arirang",name:"ARIRANG",year:"2026",type:"Full Album",category:"group",songs:[{t:"Body to Body",h:"바디 투 바디",d:"3:21",l:""},{t:"Hooligan",h:"훌리건",d:"3:15",l:""},{t:"Aliens",h:"에일리언스",d:"3:08",l:""},{t:"FYA",h:"FYA",d:"2:59",l:""},{t:"2.0",h:"2.0",d:"3:34",l:""},{t:"No. 29",h:"넘버 29",d:"1:42",l:""},{t:"SWIM",h:"스윔",d:"3:17",l:""},{t:"Merry Go Round",h:"메리 고 라운드",d:"3:45",l:""},{t:"NORMAL",h:"노멀",d:"3:02",l:""},{t:"Like Animals",h:"라이크 애니멀스",d:"3:28",l:""},{t:"they don't know 'bout us",h:"데이 돈 노",d:"3:51",l:""},{t:"One More Night",h:"원 모어 나잇",d:"4:05",l:""},{t:"Please",h:"플리즈",d:"3:38",l:""},{t:"Into the Sun",h:"인투 더 선",d:"4:12",l:""}]},
+  {id:"rm-mono",name:"mono.",year:"2018",type:"Mixtape",category:"rm",member:"RM",songs:[{t:"tokyo",h:"도쿄",d:"3:14",l:""},{t:"seoul",h:"서울",d:"3:42",l:""},{t:"moonchild",h:"문차일드",d:"5:05",l:""},{t:"badbye",h:"배드바이",d:"3:20",l:""},{t:"uhgood",h:"어굿",d:"2:53",l:""},{t:"forever rain",h:"포에버 레인",d:"5:01",l:""}]},
+  {id:"rm-indigo",name:"Indigo",year:"2022",type:"Solo Album",category:"rm",member:"RM",songs:[{t:"Yun",h:"윤",d:"4:17",l:""},{t:"Still Life",h:"스틸 라이프",d:"3:47",l:""},{t:"All Day",h:"올 데이",d:"3:24",l:""},{t:"Wild Flower",h:"와일드 플라워",d:"4:03",l:""},{t:"Lonely",h:"론리",d:"3:42",l:""},{t:"Blade",h:"블레이드",d:"4:13",l:""},{t:"Hectic",h:"헥틱",d:"2:47",l:""},{t:"Closer",h:"클로저",d:"3:51",l:""},{t:"Faded",h:"페이디드",d:"3:22",l:""},{t:"Change pt.2",h:"체인지 파트 2",d:"2:50",l:""}]},
+  {id:"rm-rpwp",name:"Right Place, Wrong Person",year:"2024",type:"Solo Album",category:"rm",member:"RM",songs:[{t:"Right People Wrong Place",h:"라이트 피플 롱 플레이스",d:"3:18",l:""},{t:"Nuts",h:"너츠",d:"2:48",l:""},{t:"Out of Love",h:"아웃 오브 러브",d:"3:37",l:""},{t:"Domodachi",h:"도모다치",d:"3:05",l:""},{t:"? (Interlude)",h:"인터루드",d:"1:24",l:""},{t:"Groin",h:"그로인",d:"3:44",l:""},{t:"Heaven",h:"헤븐",d:"3:29",l:""},{t:"LOST!",h:"로스트",d:"3:07",l:""},{t:"Around the World in a Day",h:"어라운드 더 월드",d:"3:51",l:""},{t:"ㅠㅠ (Credit Roll)",h:"크레딧 롤",d:"3:12",l:""},{t:"Come Back to Me",h:"컴 백 투 미",d:"3:33",l:""}]},
+  {id:"jin-early",name:"Jin Solo Singles",year:"2018–2022",type:"Singles",category:"jin",member:"Jin",songs:[{t:"Epiphany",h:"에피파니",d:"4:00",l:""},{t:"Awake",h:"어웨이크",d:"4:39",l:""},{t:"Tonight",h:"오늘 밤 이 노래처럼",d:"3:47",l:""},{t:"Super Tuna",h:"슈퍼 참치",d:"3:02",l:""},{t:"Abyss",h:"어비스",d:"3:55",l:""},{t:"The Astronaut",h:"디 애스트로넛",d:"3:33",l:""}]},
+  {id:"jin-happy",name:"Happy",year:"2024",type:"Mini Album",category:"jin",member:"Jin",songs:[{t:"Running Wild",h:"러닝 와일드",d:"3:12",l:""},{t:"I'll Be There",h:"아이 윌 비 데어",d:"3:09",l:""},{t:"Another Level",h:"어나더 레벨",d:"3:21",l:""},{t:"Falling",h:"폴링",d:"3:44",l:""},{t:"Heart on the Window",h:"하트 온 더 윈도우",d:"3:38",l:""},{t:"I Will Come to You",h:"아이 윌 컴 투 유",d:"4:02",l:""}]},
+  {id:"jin-echo",name:"Echo",year:"2025",type:"Mini Album",category:"jin",member:"Jin",songs:[{t:"Don't Say You Love Me",h:"돈 세이 유 러브 미",d:"3:00",l:""},{t:"Nothing Without Your Love",h:"낫띵 위다웃 유어 러브",d:"2:56",l:""},{t:"Loser",h:"루저",d:"3:18",l:""},{t:"Rope It",h:"로프 잇",d:"2:44",l:""},{t:"Travel with the Clouds",h:"위드 더 클라우즈",d:"3:33",l:""},{t:"Background",h:"백그라운드",d:"3:47",l:""},{t:"To Me, Today",h:"투 미 투데이",d:"4:01",l:""}]},
+  {id:"agust-d",name:"Agust D",year:"2016",type:"Mixtape",category:"suga",member:"Suga",songs:[{t:"Intro: Dt sugA",h:"인트로",d:"3:18",l:""},{t:"Agust D",h:"어거스트 디",d:"3:43",l:""},{t:"give it to me",h:"기브 잇 투 미",d:"3:28",l:""},{t:"724148",h:"724148",d:"4:08",l:""},{t:"140503 at dawn",h:"140503 새벽에",d:"4:18",l:""},{t:"The Last",h:"마지막",d:"4:28",l:""},{t:"Tony Montana",h:"토니 모타나",d:"3:57",l:""},{t:"So Far Away",h:"이 길 위에서",d:"4:47",l:""}]},
+  {id:"d2",name:"D-2",year:"2020",type:"Mixtape",category:"suga",member:"Suga",songs:[{t:"Interlude: Set Me Free",h:"인터루드",d:"1:46",l:""},{t:"Daechwita",h:"대취타",d:"3:09",l:""},{t:"Strange",h:"이상해",d:"3:05",l:""},{t:"Moon",h:"달",d:"3:40",l:""},{t:"Burn It",h:"번 잇",d:"3:39",l:""},{t:"People",h:"사람",d:"3:53",l:""},{t:"Dear My Friend",h:"친애하는 나의 친구에게",d:"4:02",l:""}]},
+  {id:"d-day",name:"D-DAY",year:"2023",type:"Solo Album",category:"suga",member:"Suga",songs:[{t:"Haegeum",h:"해금",d:"2:58",l:""},{t:"HUH?!",h:"허?!",d:"3:03",l:""},{t:"Polar Night",h:"백야",d:"3:47",l:""},{t:"SDL",h:"SDL",d:"3:52",l:""},{t:"People Pt.2",h:"사람 Pt.2",d:"3:03",l:""},{t:"Snooze",h:"스누즈",d:"4:21",l:""},{t:"Amygdala",h:"아미그달라",d:"4:35",l:""},{t:"Interlude: Dawn",h:"인터루드: 새벽",d:"1:53",l:""},{t:"To Flowers",h:"꽃이 되는 꿈",d:"5:07",l:""},{t:"What Do You Think?",h:"어때요",d:"3:03",l:""}]},
+  {id:"hope-world",name:"Hope World",year:"2018",type:"Mixtape",category:"jhope",member:"J-Hope",songs:[{t:"Intro: Hope World",h:"인트로 호프 월드",d:"2:34",l:""},{t:"Hope World",h:"호프 월드",d:"3:08",l:""},{t:"Daydream",h:"백일몽",d:"3:47",l:""},{t:"HANGSANG",h:"항상",d:"3:21",l:""},{t:"Airplane",h:"비행기",d:"3:46",l:""}]},
+  {id:"jitb",name:"Jack In The Box",year:"2022",type:"Solo Album",category:"jhope",member:"J-Hope",songs:[{t:"Pandora's Box",h:"판도라의 상자",d:"2:48",l:""},{t:"MORE",h:"모어",d:"2:56",l:""},{t:"STOP",h:"스탑",d:"2:57",l:""},{t:"= (Equal Sign)",h:"이퀄 사인",d:"2:50",l:""},{t:"Music Box: Reflection",h:"뮤직 박스",d:"2:03",l:""},{t:"Safety Zone",h:"세이프티 존",d:"3:50",l:""},{t:"Future",h:"퓨처",d:"2:41",l:""},{t:"0.7 Miles",h:"0.7 마일스",d:"3:52",l:""},{t:"Arson",h:"방화",d:"3:02",l:""}]},
+  {id:"hope-street",name:"HOPE ON THE STREET Vol.1",year:"2024",type:"Mini Album",category:"jhope",member:"J-Hope",songs:[{t:"on the street (solo version)",h:"온 더 스트릿",d:"3:14",l:""},{t:"i wonder…",h:"아이 원더",d:"3:28",l:""},{t:"lock / unlock",h:"락 언락",d:"3:05",l:""},{t:"I don't know",h:"아이 돈 노",d:"3:41",l:""},{t:"what if…",h:"왓 이프",d:"3:56",l:""},{t:"NEURON",h:"뉴런",d:"3:30",l:""}]},
+  {id:"jhope-2025",name:"J-Hope 2025 Singles",year:"2025",type:"Singles",category:"jhope",member:"J-Hope",songs:[{t:"Mona Lisa",h:"모나리자",d:"3:02",l:""},{t:"Killin' It Girl",h:"킬링 잇 걸",d:"2:58",l:""},{t:"Spaghetti",h:"스파게티",d:"3:10",l:""}]},
+  {id:"jimin-face",name:"FACE",year:"2023",type:"Solo Album",category:"jimin",member:"Jimin",songs:[{t:"Face-off",h:"페이스 오프",d:"1:27",l:""},{t:"Interlude: Dive",h:"인터루드: 다이브",d:"1:24",l:""},{t:"Like Crazy",h:"라이크 크레이지",d:"3:33",l:""},{t:"Alone",h:"얼론",d:"3:47",l:""},{t:"Set Me Free Pt.2",h:"셋 미 프리 Pt.2",d:"3:17",l:""},{t:"Naked",h:"네이키드",d:"3:42",l:""}]},
+  {id:"jimin-muse",name:"MUSE",year:"2024",type:"Solo Album",category:"jimin",member:"Jimin",songs:[{t:"Rebirth",h:"리버스",d:"3:25",l:""},{t:"Who",h:"후",d:"2:54",l:""},{t:"Smeraldo Garden Marching Band",h:"스메랄도 가든 마칭 밴드",d:"3:09",l:""},{t:"Be Mine",h:"비 마인",d:"3:51",l:""},{t:"Slow Dance",h:"슬로우 댄스",d:"3:41",l:""},{t:"Closer Than This",h:"클로저 댄 디스",d:"3:29",l:""},{t:"Interlude: Volte-face",h:"인터루드: 볼트 페이스",d:"1:43",l:""}]},
+  {id:"v-early",name:"V Solo Singles",year:"2019–2022",type:"Singles",category:"v",member:"V",songs:[{t:"Sweet Night",h:"스위트 나잇",d:"4:05",l:""},{t:"Christmas Tree",h:"크리스마스 트리",d:"3:06",l:""},{t:"Stigma",h:"스티그마",d:"3:59",l:""},{t:"Inner Child",h:"이너 차일드",d:"4:07",l:""}]},
+  {id:"v-layover",name:"Layover",year:"2023",type:"Solo Album",category:"v",member:"V",songs:[{t:"Intro",h:"인트로",d:"1:29",l:""},{t:"Love Me Again",h:"러브 미 어게인",d:"3:13",l:""},{t:"Slow Dancing",h:"슬로우 댄싱",d:"4:07",l:""},{t:"Rainy Days",h:"레이니 데이즈",d:"3:17",l:""},{t:"Blue",h:"블루",d:"3:54",l:""},{t:"For Us",h:"포 어스",d:"3:40",l:""}]},
+  {id:"v-2024",name:"V Singles 2024",year:"2024",type:"Singles",category:"v",member:"V",songs:[{t:"FRI(END)S",h:"프렌즈",d:"3:09",l:""},{t:"Winter Ahead",h:"윈터 어헤드",d:"3:47",l:""},{t:"White Christmas",h:"화이트 크리스마스",d:"2:57",l:""}]},
+  {id:"jk-early",name:"Jungkook Solo Singles",year:"2019–2022",type:"Singles",category:"jk",member:"Jungkook",songs:[{t:"Euphoria",h:"유포리아",d:"5:15",l:""},{t:"Begin",h:"비긴",d:"3:37",l:""},{t:"My You",h:"마이 유",d:"3:19",l:""},{t:"Still With You",h:"스틸 위드 유",d:"4:13",l:""},{t:"Stay Alive",h:"스테이 얼라이브",d:"3:30",l:""},{t:"Left and Right",h:"레프트 앤 라이트",d:"2:54",l:""}]},
+  {id:"jk-golden",name:"GOLDEN",year:"2023",type:"Solo Album",category:"jk",member:"Jungkook",songs:[{t:"3D",h:"3D",d:"2:58",l:""},{t:"Standing Next to You",h:"스탠딩 넥스트 투 유",d:"3:22",l:""},{t:"Hate You",h:"헤이트 유",d:"3:10",l:""},{t:"Yes or No",h:"예스 오어 노",d:"2:55",l:""},{t:"Please Don't Change",h:"플리즈 돈 체인지",d:"3:53",l:""},{t:"Somebody",h:"썸바디",d:"3:10",l:""},{t:"Seven",h:"세븐",d:"2:49",l:""},{t:"Too Sad to Dance",h:"투 새드 투 댄스",d:"3:27",l:""},{t:"Closer to You",h:"클로저 투 유",d:"4:07",l:""},{t:"Shot Glass of Tears",h:"샷 글래스 오브 티어스",d:"3:53",l:""},{t:"Dreamers",h:"드리머스",d:"3:39",l:""}]},
+  {id:"jk-2024",name:"Jungkook 2024 Single",year:"2024",type:"Single",category:"jk",member:"Jungkook",songs:[{t:"Never Let Go",h:"네버 렛 고",d:"3:22",l:""}]},
+];
+
+const MEMBER_CLASS={rm:"member-rm",jin:"member-jin",suga:"member-suga",jhope:"member-jhope",jimin:"member-jimin",v:"member-v",jk:"member-jk"};
+const FILTER_LABELS={all:"All",group:"Group",rm:"RM",jin:"Jin",suga:"Suga / Agust D",jhope:"J-Hope",jimin:"Jimin",v:"V",jk:"Jungkook"};
+
+// ══ PAGE NAV ══
+function showPage(name,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ══ EDITOR ══
+let editorOpen=false,inlineEditEnabled=false;
+const EDITABLE_IDS=["eyebrow-text","site-title","site-subtitle","site-desc","footer-text","footer-tagline"];
+function toggleEditor(){
+  editorOpen=!editorOpen;
+  document.getElementById('editor-panel').classList.toggle('open',editorOpen);
+  document.body.classList.toggle('editor-open',editorOpen);
+  document.getElementById('editor-toggle-nav').textContent=editorOpen?'✕ Close':'✦ Edit Site';
+}
+function setVar(v,val){document.documentElement.style.setProperty(v,val)}
+function setFont(v,val){document.documentElement.style.setProperty(v,val)}
+function toggleInlineEdit(){
+  inlineEditEnabled=!inlineEditEnabled;
+  document.getElementById('inline-edit-label').textContent=inlineEditEnabled?'Disable Click-to-Edit Text':'Enable Click-to-Edit Text';
+  EDITABLE_IDS.forEach(id=>{const el=document.getElementById(id);if(el)el.contentEditable=inlineEditEnabled?'true':'false'});
+  document.querySelectorAll('.album-name').forEach(el=>{el.contentEditable=inlineEditEnabled?'true':'false'});
+  if(inlineEditEnabled){const h=document.getElementById('edit-hint');h.classList.add('show');setTimeout(()=>h.classList.remove('show'),3000)}
+}
+const PRESETS={
+  dark:{'--bg':'#0a0a0f','--bg2':'#111118','--bg3':'#1a1a24','--text':'#f0eef8','--text2':'#9994b8','--text3':'#5a5575','--accent1':'#a78bfa','--accent2':'#f472b6','--accent3':'#fbbf24','--border':'rgba(255,255,255,0.07)','--border2':'rgba(255,255,255,0.14)'},
+  light:{'--bg':'#f8f7ff','--bg2':'#ffffff','--bg3':'#f0effe','--text':'#1a1528','--text2':'#4a4268','--text3':'#8878b0','--accent1':'#7c3aed','--accent2':'#be185d','--accent3':'#b45309','--border':'rgba(0,0,0,0.08)','--border2':'rgba(0,0,0,0.15)'},
+  midnight:{'--bg':'#020817','--bg2':'#0c1225','--bg3':'#111e38','--text':'#e2e8f0','--text2':'#7fb3d3','--text3':'#3d6480','--accent1':'#38bdf8','--accent2':'#818cf8','--accent3':'#34d399','--border':'rgba(56,189,248,0.08)','--border2':'rgba(56,189,248,0.18)'},
+  rose:{'--bg':'#1a0a10','--bg2':'#240f18','--bg3':'#301520','--text':'#fce7f3','--text2':'#f9a8d4','--text3':'#9d4d6a','--accent1':'#f472b6','--accent2':'#fb923c','--accent3':'#fbbf24','--border':'rgba(244,114,182,0.1)','--border2':'rgba(244,114,182,0.2)'},
+  army:{'--bg':'#050f0a','--bg2':'#0a1a11','--bg3':'#10271a','--text':'#d1fae5','--text2':'#6ee7b7','--text3':'#2d6a4a','--accent1':'#34d399','--accent2':'#6ee7b7','--accent3':'#fbbf24','--border':'rgba(52,211,153,0.08)','--border2':'rgba(52,211,153,0.18)'},
+};
+function applyPreset(name){
+  const p=PRESETS[name];if(!p)return;
+  Object.entries(p).forEach(([k,v])=>setVar(k,v));
+  document.querySelectorAll('.editor-row input[type="color"]').forEach(inp=>{
+    const label=inp.previousElementSibling?.textContent?.trim();
+    const map={'Background':'--bg','Card Background':'--bg2','Primary Text':'--text','Accent 1 (Purple)':'--accent1','Accent 2 (Pink)':'--accent2','Accent 3 (Gold)':'--accent3','Muted Text':'--text2'};
+    const vk=map[label];if(vk&&p[vk]&&p[vk].startsWith('#'))inp.value=p[vk];
+  });
+}
+function resetAll(){document.documentElement.removeAttribute('style');applyPreset('dark');if(inlineEditEnabled)toggleInlineEdit()}
+function exportHTML(){
+  const vars=['--bg','--bg2','--bg3','--text','--text2','--text3','--accent1','--accent2','--accent3','--border','--border2','--radius','--font-display','--font-body','--font-mono'];
+  let overrides=':root {\n';
+  vars.forEach(v=>{const val=document.documentElement.style.getPropertyValue(v);if(val)overrides+=`  ${v}: ${val};\n`});
+  overrides+='}';
+  let html=document.documentElement.outerHTML;
+  // Embed current DATA state so saved songs persist
+  html=html.replace('let DATA=[','let DATA=/*SAVED*/').replace(/let DATA=\[\n.*?\];/s,'let DATA='+JSON.stringify(DATA)+';');
+  html=html.replace(/contenteditable="true"/g,'contenteditable="false"');
+  if(overrides.trim()!==':root {\n}')html=html.replace('</style>',overrides+'\n</style>');
+  const blob=new Blob([html],{type:'text/html'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='bts-archive-custom.html';a.click();
+}
+
+// ══ SPOTIFY ══
+function extractSpotifyId(url){
+  try{const u=new URL(url.trim());const parts=u.pathname.split('/').filter(Boolean);if(parts.length>=2)return{type:parts[0],id:parts[1].split('?')[0]}}catch(e){}
+  const m=url.match(/spotify\.com\/(track|album|playlist|artist)\/([A-Za-z0-9]+)/);
+  if(m)return{type:m[1],id:m[2]};return null;
+}
+function loadSpotify(){
+  const raw=document.getElementById('spotifyUrlInput').value.trim();
+  if(!raw)return;
+  const parsed=extractSpotifyId(raw);
+  if(!parsed){alert('Please paste a valid Spotify URL (track, album, playlist, or artist)');return}
+  document.getElementById('spotifyFrame').src=`https://open.spotify.com/embed/${parsed.type}/${parsed.id}?utm_source=generator&theme=0`;
+  document.getElementById('spotifyUrlInput').value='';
+}
+
+// ══ LYRICS MODAL ══
+let lyricsTarget=null; // {albumIdx, songIdx}
+let lyricsMode='view';
+
+function openLyricsModal(albumId,songIdx){
+  const albumIdx=DATA.findIndex(a=>a.id===albumId);
+  if(albumIdx<0)return;
+  const album=DATA[albumIdx];
+  const song=album.songs[songIdx];
+  lyricsTarget={albumIdx,songIdx};
+  document.getElementById('lm-title').textContent=song.t;
+  document.getElementById('lm-meta').textContent=`${song.h}  ·  ${album.name}  ·  ${song.d}`;
+  document.getElementById('lyricsEditArea').value=song.l||'';
+  setLyricsMode('view');
+  openModal('lyricsModal');
+}
+
+function setLyricsMode(mode){
+  lyricsMode=mode;
+  const viewPane=document.getElementById('lyricsViewPane');
+  const editArea=document.getElementById('lyricsEditArea');
+  const saveBtn=document.getElementById('saveLyricsBtn');
+  document.getElementById('modeView').classList.toggle('active',mode==='view');
+  document.getElementById('modeEdit').classList.toggle('active',mode==='edit');
+  if(mode==='view'){
+    editArea.style.display='none';
+    saveBtn.style.display='none';
+    const lyrics=lyricsTarget?DATA[lyricsTarget.albumIdx].songs[lyricsTarget.songIdx].l:'';
+    if(lyrics&&lyrics.trim()){
+      viewPane.innerHTML=`<div class="lyrics-display">${escapeHtml(lyrics)}</div>`;
+    } else {
+      viewPane.innerHTML=`<div class="lyrics-empty"><div class="lyrics-empty-icon">♪</div>No romanized lyrics yet.<br>Switch to Edit mode to add them.</div>`;
+    }
+    viewPane.style.display='block';
+  } else {
+    viewPane.style.display='none';
+    editArea.style.display='block';
+    saveBtn.style.display='inline-flex';
+    editArea.focus();
+  }
+}
+
+function saveLyrics(){
+  if(!lyricsTarget)return;
+  DATA[lyricsTarget.albumIdx].songs[lyricsTarget.songIdx].l=document.getElementById('lyricsEditArea').value;
+  setLyricsMode('view');
+  render(); // refresh to update has-lyrics indicator
+}
+
+function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+// ══ ADD SONG MODAL ══
+function openAddSong(){
+  populateAlbumSelect();
+  document.getElementById('as-title').value='';
+  document.getElementById('as-hangul').value='';
+  document.getElementById('as-duration').value='';
+  document.getElementById('as-lyrics').value='';
+  document.getElementById('newAlbumRow').style.display='none';
+  openModal('addSongModal');
+  setTimeout(()=>document.getElementById('as-title').focus(),200);
+}
+
+function populateAlbumSelect(){
+  const sel=document.getElementById('as-album');
+  sel.innerHTML=DATA.map(a=>`<option value="${a.id}">${a.name} (${a.year})</option>`).join('');
+  sel.innerHTML+='<option value="__new__">+ Create new album/collection…</option>';
+}
+
+function handleAlbumSelect(sel){
+  document.getElementById('newAlbumRow').style.display=sel.value==='__new__'?'flex':'none';
+}
+
+function saveNewSong(){
+  const title=document.getElementById('as-title').value.trim();
+  if(!title){alert('Please enter a song title.');document.getElementById('as-title').focus();return}
+  const albumSel=document.getElementById('as-album');
+  let albumIdx;
+  if(albumSel.value==='__new__'){
+    const newName=document.getElementById('as-new-album-name').value.trim();
+    if(!newName){alert('Please enter an album name.');document.getElementById('as-new-album-name').focus();return}
+    const cat=document.getElementById('as-new-album-cat').value;
+    const newAlbum={
+      id:'custom-'+Date.now(),
+      name:newName,
+      year:new Date().getFullYear().toString(),
+      type:'Custom',
+      category:cat,
+      member:cat!=='group'?FILTER_LABELS[cat]:undefined,
+      songs:[]
+    };
+    DATA.push(newAlbum);
+    albumIdx=DATA.length-1;
+  } else {
+    albumIdx=DATA.findIndex(a=>a.id===albumSel.value);
+  }
+  DATA[albumIdx].songs.push({
+    t:title,
+    h:document.getElementById('as-hangul').value.trim(),
+    d:document.getElementById('as-duration').value.trim()||'—',
+    l:document.getElementById('as-lyrics').value.trim()
+  });
+  closeModal('addSongModal');
+  buildFilters();
+  render();
+}
+
+function deleteSong(albumId,songIdx,e){
+  e.stopPropagation();
+  const albumIdx=DATA.findIndex(a=>a.id===albumId);
+  if(albumIdx<0)return;
+  const song=DATA[albumIdx].songs[songIdx];
+  if(!confirm(`Remove "${song.t}" from ${DATA[albumIdx].name}?`))return;
+  DATA[albumIdx].songs.splice(songIdx,1);
+  if(DATA[albumIdx].songs.length===0){
+    if(confirm(`"${DATA[albumIdx].name}" is now empty. Remove the album too?`))DATA.splice(albumIdx,1);
+  }
+  buildFilters();render();
+}
+
+// ══ MODALS SHARED ══
+function openModal(id){document.getElementById(id).classList.add('open');document.body.style.overflow='hidden'}
+function closeModal(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';lyricsTarget=null}
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{if(e.target===o)closeModal(o.id)});
+});
+
+// ══ SONGS RENDER ══
+function buildFilters(){
+  const cats=["all","group","rm","jin","suga","jhope","jimin","v","jk"];
+  document.getElementById('filterBtns').innerHTML=cats.map(c=>
+    `<button class="tab-btn${c==="all"?" active":""}" data-cat="${c}" onclick="setFilter(this)">${FILTER_LABELS[c]}</button>`
+  ).join('');
+}
+function setFilter(btn){document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');render()}
+function render(){
+  const q=(document.getElementById('search').value||'').toLowerCase().trim();
+  const activeBtn=document.querySelector('.tab-btn.active');
+  const cat=activeBtn?activeBtn.dataset.cat:'all';
+  let totalSongs=0,html='';
+  DATA.filter(a=>cat==='all'||a.category===cat).forEach(album=>{
+    const songs=album.songs.filter(s=>!q||s.t.toLowerCase().includes(q)||s.h.toLowerCase().includes(q));
+    if(!songs.length)return;
+    totalSongs+=songs.length;
+    const mClass=MEMBER_CLASS[album.category]||'';
+    const isGroup=album.category==='group';
+    html+=`<div class="album-section ${mClass}"><div class="album-header">
+      <div class="album-badge"><span class="album-badge-year">${album.year.toString().split('–')[0].toString().substring(2)}</span><span class="album-badge-type">${album.type.split(' ')[0]}</span></div>
+      <div><div class="album-name"${inlineEditEnabled?' contenteditable="true"':''}>${album.name}</div><div class="album-meta">${album.year} · ${album.type} · ${album.songs.length} tracks</div></div>
+      ${!isGroup&&album.member?`<span class="member-tag">${album.member}</span>`:''}
+    </div><div class="songs-grid">`;
+    songs.forEach((s,i)=>{
+      const hasLyrics=s.l&&s.l.trim().length>0;
+      html+=`<div class="song-card">
+        <span class="track-num">${String(i+1).padStart(2,'0')}</span>
+        <div class="song-text" onclick="openLyricsModal('${album.id}',${album.songs.indexOf(s)})" title="Click to view/add romanized lyrics">
+          <div class="song-romanized">${s.t}</div>
+          <div class="song-hangul">${s.h||'—'}</div>
+        </div>
+        <div class="song-right">
+          <span class="song-duration">${s.d}</span>
+          <button class="lyrics-btn${hasLyrics?' has-lyrics':''}" onclick="openLyricsModal('${album.id}',${album.songs.indexOf(s)})">${hasLyrics?'♪ Lyrics':'+ Lyrics'}</button>
+          <button class="delete-song-btn" onclick="deleteSong('${album.id}',${album.songs.indexOf(s)},event)" title="Remove song">✕</button>
+        </div>
+      </div>`;
+    });
+    html+=`</div></div>`;
+  });
+  if(!totalSongs)html=`<div class="no-results"><div class="no-results-icon">♪</div><div>No songs found</div></div>`;
+  document.getElementById('content').innerHTML=html;
+  const allSongs=DATA.reduce((s,a)=>s+a.songs.length,0);
+  const soloSongs=DATA.filter(a=>a.category!=='group').reduce((s,a)=>s+a.songs.length,0);
+  document.getElementById('statSongs').textContent=allSongs;
+  document.getElementById('statAlbums').textContent=DATA.length;
+  document.getElementById('statSolo').textContent=soloSongs;
+  const shown=(cat==='all'&&!q)?allSongs:totalSongs;
+  document.getElementById('resultsInfo').textContent=shown===allSongs?`Showing all ${allSongs} songs · Click any song to view/add lyrics`:`Showing ${totalSongs} song${totalSongs!==1?'s':''}`;
+}
+
+// ══ PERSISTENCE ══
+const LS_PHOTOS='bts_archive_photos';
+const LS_LYRICS='bts_archive_lyrics';
+const LS_SONGS ='bts_archive_songs';
+
+function saveAll(){
+  // Save lyrics + custom songs embedded in DATA
+  try{localStorage.setItem(LS_SONGS, JSON.stringify(DATA))}catch(e){showToast('⚠ Storage full — photos may not all fit. Try removing some.',4000)}
+  // Save photos separately (large base64 blobs)
+  try{localStorage.setItem(LS_PHOTOS, JSON.stringify(photos))}catch(e){showToast('⚠ Photos storage full. Remove some photos to free space.',4000)}
+  setTimeout(updateStorageInfo,100);
+}
+
+function loadSaved(){
+  // Restore custom songs + lyrics into DATA
+  try{
+    const saved=localStorage.getItem(LS_SONGS);
+    if(saved){
+      const parsed=JSON.parse(saved);
+      // Merge: restore lyrics into built-in songs; append fully custom albums
+      parsed.forEach(savedAlbum=>{
+        const existing=DATA.find(a=>a.id===savedAlbum.id);
+        if(existing){
+          // Merge lyrics and custom songs back into existing album
+          savedAlbum.songs.forEach((savedSong,si)=>{
+            if(existing.songs[si]){
+              existing.songs[si].l=savedSong.l||'';
+            } else {
+              // Extra songs added by user
+              existing.songs.push(savedSong);
+            }
+          });
+        } else {
+          // Fully custom album added by user — re-add it
+          DATA.push(savedAlbum);
+        }
+      });
+    }
+  }catch(e){console.warn('Could not restore songs',e)}
+
+  // Restore photos
+  try{
+    const saved=localStorage.getItem(LS_PHOTOS);
+    if(saved) photos=JSON.parse(saved);
+  }catch(e){console.warn('Could not restore photos',e)}
+}
+
+// ══ TOAST ══
+function showToast(msg, duration=2500){
+  let t=document.getElementById('bts-toast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='bts-toast';
+    t.style.cssText='position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:rgba(124,58,237,.95);color:#fff;padding:10px 22px;border-radius:20px;font-family:var(--font-mono);font-size:11px;letter-spacing:1px;z-index:999;pointer-events:none;transition:opacity .3s;white-space:nowrap;max-width:90vw;text-align:center';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg;t.style.opacity='1';
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>t.style.opacity='0',duration);
+}
+
+// ══ GALLERY ══
+let photos=[];
+
+function handleFileSelect(files){
+  const promises=Array.from(files).filter(f=>f.type.startsWith('image/')).map(file=>new Promise(res=>{
+    const reader=new FileReader();
+    reader.onload=e=>{photos.push({id:Date.now()+Math.random(),src:e.target.result,name:file.name});res()};
+    reader.readAsDataURL(file);
+  }));
+  Promise.all(promises).then(()=>{renderGallery();saveAll();showToast(`✦ ${promises.length} photo${promises.length!==1?'s':''} added & saved`)});
+  document.getElementById('photo-file-input').value='';
+}
+
+function deletePhoto(id){
+  photos=photos.filter(p=>p.id!==id);
+  renderGallery();saveAll();showToast('Photo removed');
+}
+
+function clearAllPhotos(){
+  if(!photos.length)return;
+  if(confirm(`Remove all ${photos.length} photo${photos.length!==1?'s':''}? This cannot be undone.`)){
+    photos=[];renderGallery();saveAll();showToast('Gallery cleared');
+  }
+}
+
+function renderGallery(){
+  const grid=document.getElementById('photoGrid');
+  document.getElementById('photoCount').textContent=`${photos.length} photo${photos.length!==1?'s':''}`;
+  if(!photos.length){
+    grid.innerHTML=`<div class="photo-empty"><div class="photo-empty-icon">✦</div><p>No photos yet<br>Add your BTS photos above<br><span style="color:var(--accent1)">Drag & drop or click Add Photos</span></p></div>`;
+    return;
+  }
+  grid.innerHTML=photos.map((p,i)=>`
+    <div class="photo-card" style="animation-delay:${i*.04}s" onclick="openPhotoLightbox(${i})">
+      <img src="${p.src}" alt="${p.name}" loading="lazy">
+      <div class="photo-card-overlay"><div class="photo-card-name">${p.name.replace(/\.[^.]+$/,'')}</div></div>
+      <button class="photo-delete-btn" onclick="event.stopPropagation();deletePhoto(${p.id})" title="Delete">✕</button>
+    </div>`).join('');
+}
+
+function openPhotoLightbox(idx){
+  const p=photos[idx];
+  document.getElementById('lightbox-img').src=p.src;
+  document.getElementById('lightbox-caption').textContent=p.name.replace(/\.[^.]+$/,'');
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeLightbox(e){
+  if(e&&e.target!==document.getElementById('lightbox')&&e.target!==document.getElementById('lightbox-close'))return;
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+const dz=document.getElementById('dropZone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dragging')});
+dz.addEventListener('dragleave',()=>dz.classList.remove('dragging'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('dragging');handleFileSelect(e.dataTransfer.files)});
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    closeLightbox({target:document.getElementById('lightbox')});
+    closeModal('lyricsModal');
+    closeModal('addSongModal');
+  }
+});
+
+// ══ PATCH SAVE INTO EXISTING ACTIONS ══
+// Wrap saveLyrics to also persist
+const _origSaveLyrics=saveLyrics;
+window.saveLyrics=function(){
+  _origSaveLyrics();
+  saveAll();
+  showToast('💜 Lyrics saved!');
+};
+
+// Wrap saveNewSong to also persist
+const _origSaveNewSong=saveNewSong;
+window.saveNewSong=function(){
+  _origSaveNewSong();
+  saveAll();
+  showToast('✦ Song added & saved!');
+};
+
+// Wrap deleteSong to also persist
+const _origDeleteSong=deleteSong;
+window.deleteSong=function(albumId,songIdx,e){
+  _origDeleteSong(albumId,songIdx,e);
+  saveAll();
+};
+
+
+function clearAllData(){
+  if(!confirm('This will erase ALL saved lyrics, photos, and custom songs. Are you sure?'))return;
+  localStorage.removeItem(LS_SONGS);
+  localStorage.removeItem(LS_PHOTOS);
+  localStorage.removeItem(LS_LYRICS);
+  photos=[];
+  // Reset lyrics on all songs
+  DATA.forEach(album=>album.songs.forEach(s=>s.l=''));
+  // Remove custom albums
+  for(let i=DATA.length-1;i>=0;i--){if(DATA[i].id.startsWith('custom-'))DATA.splice(i,1)}
+  renderGallery();buildFilters();render();
+  showToast('All saved data cleared.',3000);
+  updateStorageInfo();
+}
+
+function updateStorageInfo(){
+  try{
+    let total=0;
+    [LS_SONGS,LS_PHOTOS].forEach(k=>{const v=localStorage.getItem(k);if(v)total+=v.length});
+    const kb=Math.round(total/1024);
+    const el=document.getElementById('storageInfo');
+    if(el)el.textContent=`💾 Auto-saves · ${kb} KB used`;
+  }catch(e){}
+}
+
+// ══ INIT ══
+loadSaved();
+buildFilters();render();renderGallery();
+updateStorageInfo();
+</script>
+</body>
+</html>
